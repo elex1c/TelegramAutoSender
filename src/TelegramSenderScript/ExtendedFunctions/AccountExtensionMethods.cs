@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using TelegramSenderScript.Models;
 using TL;
 
@@ -27,21 +26,49 @@ public static class AccountExtensionMethods
             .Value != null;
     }
 
-    public static async Task<bool> JoinGroup(this Account account, string channelUsername)
+    public static async Task<Contacts_ResolvedPeer?> GetGroupInfo(this Account account, string channelUsername)
     {
-        if (account.TelegramClient is null || !account.IsConnected) return false;
-        
-        UpdatesBase? basse;
+        if (account.TelegramClient is null || !account.IsConnected) return null;
+
         Contacts_ResolvedPeer? info;
         try
         {
             info = await account.TelegramClient.Contacts_ResolveUsername(channelUsername);
-            basse = await account.TelegramClient.Channels_JoinChannel(info.Channel);
+        }
+        catch (Exception) { return null; }
+        
+        return info;
+    }
+    
+    public static async Task<ChatBase?> GetGroupInfo(this Account account, Uri uri)
+    {
+        if (account.TelegramClient is null || !account.IsConnected) return null;
+
+        ChatBase? info;
+        try
+        {
+            info = await account.TelegramClient.AnalyzeInviteLink(uri.AbsoluteUri);
+        }
+        catch (Exception) { return null; }
+        
+        return info;
+    }
+    
+    public static async Task<bool> JoinGroup(this Account account, string channelUsername)
+    {
+        if (account.TelegramClient is null || !account.IsConnected) return false;
+        
+        UpdatesBase? updatedChatBase;
+        Contacts_ResolvedPeer? info;
+        try
+        {
+            info = await account.TelegramClient.Contacts_ResolveUsername(channelUsername);
+            updatedChatBase = await account.TelegramClient.Channels_JoinChannel(info.Channel);
         }
         catch (Exception) { return false; }
 
-        if (basse is not null)
-            return basse.Chats.ContainsKey(info.Channel.ID);
+        if (updatedChatBase is not null)
+            return updatedChatBase.Chats.ContainsKey(info.Channel.ID);
         return false;
     }
 

@@ -1,4 +1,3 @@
-using TL;
 using WTelegram;
 
 namespace TelegramSenderScript.Models;

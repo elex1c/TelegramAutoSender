@@ -6,13 +6,13 @@ public static class Helper
     {
         if (string.IsNullOrEmpty(path))
         {
-            Console.WriteLine(fileExceptionName + " path is empty! You can define it in appsettings.json");
+            ConsoleWriteLineRed(fileExceptionName + " path is empty! You can define it in appsettings.json");
             return null;
         }
 
         if (Path.GetExtension(path) != requiredFileExtension)
         {
-            Console.WriteLine(fileExceptionName + " path has wrong file extension! You can change it in appsettings.json");
+            ConsoleWriteLineRed(fileExceptionName + " path has wrong file extension! You can change it in appsettings.json");
             return null;
         }
         
@@ -20,7 +20,7 @@ public static class Helper
         {
             if (File.Exists(path)) { return path; }
             
-            Console.WriteLine(fileExceptionName + " path is wrong! You can change it in appsettings.json");
+            ConsoleWriteLineRed(fileExceptionName + " path is wrong! You can change it in appsettings.json");
             return null;
         }
         else
@@ -28,8 +28,19 @@ public static class Helper
             string combinedPath = Path.Combine(Directory.GetCurrentDirectory(), path);
             if (File.Exists(combinedPath)) return combinedPath;
 
-            Console.WriteLine(fileExceptionName + " path is wrong! You can change it in appsettings.json");
+            ConsoleWriteLineRed(fileExceptionName + " path is wrong! You can change it in appsettings.json");
             return null;
         }
+    }
+
+    public static void ConsoleWriteLineRed(string text) => ConsoleWriteLineColor(text, ConsoleColor.Red);
+    public static void ConsoleWriteLineGreen(string text) => ConsoleWriteLineColor(text, ConsoleColor.Green);
+
+    private static void ConsoleWriteLineColor(string text, ConsoleColor color)
+    {
+        ConsoleColor lastColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+        Console.WriteLine(text);
+        Console.ForegroundColor = lastColor;
     }
 }
