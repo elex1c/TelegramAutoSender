@@ -5,22 +5,24 @@ namespace TelegramSenderScript.ExtendedFunctions;
 
 public static class AccountExtensionMethods
 {
-    public static async Task<bool> IsUserInChannel(this Account account, long channelId)
-    {
-        if (account.TelegramClient is null || !account.IsConnected) return false;
-        
-        Messages_Chats? chats = await account.TelegramClient
-            .Messages_GetAllChats();
-        return chats.chats
-            .ContainsKey(channelId);
-    }
-
     public static async Task<bool> IsUserInChannel(this Account account, string channelUsername)
     {
         if (account.TelegramClient is null || !account.IsConnected) return false;
+
+        Messages_Chats? chats;
+        try
+        {
+            chats = await account.TelegramClient
+                .Messages_GetAllChats();
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("BAN") || ex.Message.Contains("DELETED_ACCOUNT"))
+                account.IsBanned = true;
+            
+            return false;
+        }
         
-        Messages_Chats? chats = await account.TelegramClient
-            .Messages_GetAllChats();
         return chats.chats
             .FirstOrDefault(x => x.Value.MainUsername == channelUsername)
             .Value != null;
@@ -40,16 +42,24 @@ public static class AccountExtensionMethods
         return info;
     }
     
-    public static async Task<ChatBase?> GetGroupInfo(this Account account, Uri uri)
+    public static async Task<ChatBase?> GetGroupInfo(this Account account, Uri uri, bool join = false)
     {
         if (account.TelegramClient is null || !account.IsConnected) return null;
 
         ChatBase? info;
         try
         {
-            info = await account.TelegramClient.AnalyzeInviteLink(uri.AbsoluteUri);
+            info = await account.TelegramClient.AnalyzeInviteLink(uri.AbsoluteUri, join);
         }
-        catch (Exception) { return null; }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("USER_ALREADY_PARTICIPANT"))
+                return await account.TelegramClient.AnalyzeInviteLink(uri.AbsoluteUri);
+            else if (ex.Message.Contains("BAN") || ex.Message.Contains("DELETED_ACCOUNT"))
+                account.IsBanned = true;
+                
+            return null;
+        }
         
         return info;
     }
@@ -65,7 +75,13 @@ public static class AccountExtensionMethods
             info = await account.TelegramClient.Contacts_ResolveUsername(channelUsername);
             updatedChatBase = await account.TelegramClient.Channels_JoinChannel(info.Channel);
         }
-        catch (Exception) { return false; }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("BAN") || ex.Message.Contains("DELETED_ACCOUNT"))
+                account.IsBanned = true;
+            
+            return false;
+        }
 
         if (updatedChatBase is not null)
             return updatedChatBase.Chats.ContainsKey(info.Channel.ID);
@@ -88,25 +104,38 @@ public static class AccountExtensionMethods
             await account.TelegramClient.SendMessageAsync(chatPeer, message);
             return true;
         }
-        catch (Exception) { return false; }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("BAN") || ex.Message.Contains("DELETED_ACCOUNT"))
+                account.IsBanned = true;
+            
+            return false;
+        }
     }
 
-    public static async Task<bool> SendMessage(this Account account, long channelId, string message)
+    public static async Task<bool> SendMessage(this Account account, Uri uri, string message)
     {
         if (account.TelegramClient is null || !account.IsConnected) return false;
         
-        if (!await account.IsUserInChannel(channelId))
+        ChatBase? chatInfo = await account.GetGroupInfo(uri, true);
+        if (chatInfo is null || !chatInfo.IsGroup || chatInfo.IsBanned())
             return false;
 
-        InputPeer? chatPeer = await GetInputPeer(account, channelId);
-
-        if (chatPeer is null) return false;
+        InputPeer? inputPeer = chatInfo.ToInputPeer(); 
+        
+        if (inputPeer is null) return false;
         try
         {
-            await account.TelegramClient.SendMessageAsync(chatPeer, message);
+            await account.TelegramClient.SendMessageAsync(inputPeer, message);
             return true;
         }
-        catch (Exception) { return false; }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("BAN") || ex.Message.Contains("DELETED_ACCOUNT"))
+                account.IsBanned = true;
+            
+            return false;
+        }
     }
 
     #region Private help methods
@@ -118,7 +147,7 @@ public static class AccountExtensionMethods
         return (await account.TelegramClient.Messages_GetAllChats())
             .chats
             .FirstOrDefault(x
-                => x.Value.MainUsername == channelUsername.Replace("@", ""))
+                => x.Value.MainUsername == channelUsername)
             .Value?
             .ToInputPeer();
     }

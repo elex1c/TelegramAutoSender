@@ -5,6 +5,7 @@ namespace TelegramSenderScript;
 public class Config
 {
     public IConfiguration Configuration { get; }
+    
     public Config()
     {
         Configuration = ConfigSetUp();

@@ -2,11 +2,11 @@ namespace TelegramSenderScript.Models;
 
 public class TelegramConnectionData
 {
-    public int ApiId { get; set; } = 0;
+    public int ApiId { get; set; }
     public string AppHash { get; set; } = string.Empty;
     public string SessionPath { get; set; } = string.Empty;
 
-    public bool IsDataLoadedCorrectly() => ApiId != 0 
+    public bool IsDataLoadedCorrectly() => ApiId != default
                                            && !string.IsNullOrEmpty(AppHash) 
                                            && !string.IsNullOrEmpty(SessionPath);
 
