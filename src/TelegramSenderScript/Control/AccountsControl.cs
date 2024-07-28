@@ -13,7 +13,7 @@ public class AccountsControl : IDisposable
 
     public Account? GetNewAccount()
     {
-        if (CurrentAccountIndex > AccountsCount) return null;
+        if (CurrentAccountIndex == AccountsCount) return null;
         
         CurrentAccountIndex++;
 

@@ -9,10 +9,18 @@ using TelegramSenderScript.Models;
 // only in accordance with the terms of the license agreement you entered into with Elexic.
 
 // TelegramSenderScript
-// Version: 1.4
+// Version: 1.4.1
 // Developed by: Elexic
 
 // This notice may not be removed or altered from any source distribution.
+
+bool _unexpectedTerminating = false;
+    UnexpectedTerminating:
+        if (_unexpectedTerminating)
+        {
+            Console.ReadKey();
+            return; 
+        }
 
 #region Configuration getting
 
@@ -21,12 +29,20 @@ using TelegramSenderScript.Models;
     string? apiDataFilePath = Helper.GetPath(config.Configuration["Paths:ApiDataPath"],
         fileExceptionName: "ApiDataPath");
 
-    if (apiDataFilePath is null) return;
+    if (apiDataFilePath is null)
+    {
+        _unexpectedTerminating = true;
+        goto UnexpectedTerminating;
+    }
 
     string? groupsPath = Helper.GetPath(config.Configuration["Paths:TelegramGroupsPath"],
         fileExceptionName: "TelegramGroupsPath");
 
-    if (groupsPath is null) return;
+    if (groupsPath is null)
+    {
+        _unexpectedTerminating = true;
+        goto UnexpectedTerminating;
+    }
 
 #endregion
 
@@ -34,7 +50,7 @@ using TelegramSenderScript.Models;
 
     string[] apiDataLines = File.ReadAllLines(apiDataFilePath);
 
-    using AccountsControl accountController = new AccountsControl();
+    AccountsControl accountController = new AccountsControl();
 
     int expectedAccountsAmount = apiDataLines.Length;
     int validApiDataCount = 0;
@@ -53,6 +69,10 @@ using TelegramSenderScript.Models;
                 
         accountController.Accounts.Add(new Account(tgData.ApiId, tgData.AppHash, tgData.SessionPath));
     }
+
+    int unloadedAccounts = accountController.Accounts.Count(a => a.UserId == 0);
+    validApiDataCount -= unloadedAccounts;
+    invalidApiDataCount += unloadedAccounts;
 
     Helper.ConsoleWriteLineGreen("Valid API data lines: " + validApiDataCount);
     Helper.ConsoleWriteLineRed("Invalid API data lines: " + invalidApiDataCount);
@@ -75,8 +95,8 @@ Console.WriteLine("\n-------------------\n");
 
     int validGroupsCount = groups.Count(x => !string.IsNullOrEmpty(x.GroupSource));
     
-    Helper.ConsoleWriteLineGreen("Successfully read telegram groups: " + validGroupsCount);
-    Console.WriteLine("Total telegram groups: " + groupLines.Length);
+    Helper.ConsoleWriteLineGreen("Read groups: " + validGroupsCount);
+    Console.WriteLine("Lines in file: " + groupLines.Length);
     
     groups = groups.Where(x => !string.IsNullOrEmpty(x.GroupSource))
         .ToList();
@@ -90,7 +110,9 @@ Console.WriteLine("\n-------------------\n");
 if (validApiDataCount == 0 || validGroupsCount == 0)
 {
     Helper.ConsoleWriteLineRed("You can't send message when you have no valid APIs for telegram or valid groups");
-    return;
+    
+    accountController.Dispose();
+    goto UnexpectedTerminating;
 }
     
 #region Sending messages
@@ -119,6 +141,7 @@ if (validApiDataCount == 0 || validGroupsCount == 0)
                     if (account.IsBanned)
                         accountController.BannedAccountUserIds?.Add(account.UserId);
                     account = accountController.GetNewAccount();
+
                     goto ConnectNewAccountOrUseOld;
                 }
             }
