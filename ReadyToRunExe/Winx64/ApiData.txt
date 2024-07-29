@@ -1,7 +1,0 @@
-24664564;1d1186b4b9be9cc9b1363cf9029f8fcc;d:\d0 9f d1 80 d0 be d0\C#\Portfolio\Github\TelegramAutoSender\src\TelegramSenderScript\bin\Debug\net8.0\WTelegram.session
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
-123123123;sdfsdfsdfsdfsdfsdf;sdfsdfsdfsdf
