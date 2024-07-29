@@ -1,4 +1,5 @@
-﻿using TelegramSenderScript;
+﻿using System.Security.Permissions;
+using TelegramSenderScript;
 using TelegramSenderScript.Control;
 using TelegramSenderScript.ExtendedFunctions;
 using TelegramSenderScript.Models;
@@ -175,10 +176,20 @@ Console.WriteLine("\n-------------------\n");
 #region End
     
     Helper.ConsoleWriteLineGreen("Successfully sent messages: " + sentMessagesCount);
-    Helper.ConsoleWriteLineRed("Message weren't sent: " + (validGroupsCount - sentMessagesCount));
+    Helper.ConsoleWriteLineRed("Messages weren't sent: " + (validGroupsCount - sentMessagesCount));
     Helper.ConsoleWriteLineGreen("Alive accounts: " + (validApiDataCount - bannedAccounts));
     Helper.ConsoleWriteLineRed("Banned accounts: " + bannedAccounts);
-    
+
+    if (accountController.BannedAccounts != 0)
+    {
+        Console.WriteLine("\nBanned accounts list\n-------------------");
+        for (int i = 0; i < accountController.BannedAccounts; i++)
+        {
+            Helper.ConsoleWriteLineRed($"| {accountController.BannedAccountUserIds![i]} |");
+            Console.WriteLine("-------------------");
+        }
+    }
+
 #endregion
 
 Console.ReadKey();

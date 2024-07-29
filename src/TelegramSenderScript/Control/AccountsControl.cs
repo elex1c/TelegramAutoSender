@@ -5,10 +5,10 @@ namespace TelegramSenderScript.Control;
 public class AccountsControl : IDisposable
 {
     public List<Account> Accounts { get; set; } = [];
-    public List<long>? BannedAccountUserIds { get; set; }
+    public List<long> BannedAccountUserIds { get; set; } = new();
     
     public int AccountsCount => Accounts.Count;
-    public int BannedAccounts => BannedAccountUserIds?.Count ?? 0;
+    public int BannedAccounts => BannedAccountUserIds.Count;
     private int CurrentAccountIndex { get; set; }
 
     public Account? GetNewAccount()
